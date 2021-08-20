@@ -21,7 +21,7 @@ jobs:
 
     - name: Create artifacts
       run: |
-        ./gradlew test deploy
+        ./gradlew deploy
 
     - name: Upload artifacts
       uses: svenstaro/upload-release-action@v2
