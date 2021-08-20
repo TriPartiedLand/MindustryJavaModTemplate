@@ -20,11 +20,13 @@ ext{
     mindustryVersion = 'v130'
     jabelVersion = "0.4.0"
     sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
-    platformRoot = new File("$sdkRoot/platforms/").listFiles().sort().reverse().find{ f -> new File(f, "android.jar").exists()}//note if this line throw err, your android sdk gone
-    d8 = new File(new File("$sdkRoot/build-tools/").listFiles().sort().reverse().find{ f -> new File(f, "d8").exists()}, "d8")
-    androidJarPath = new File(platformRoot, "android.jar")
+    androidJarPath = new File(sdkRoot, "android.jar")
+    try {
+        platformRoot = new File("$sdkRoot/platforms/").listFiles().sort().reverse().find { f -> new File(f, "android.jar").exists() }
+        androidJarPath = new File(platformRoot, "android.jar")
+    }catch(ignored){}
     if(!androidJarPath.exists()) println("Warning not exist: $androidJarPath")
-    println d8
+
 
 
 }
@@ -48,12 +50,18 @@ task jarAndroid{
 
     doLast{
         if(!sdkRoot || !new File(sdkRoot).exists()) throw new GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.");
-
+        def platformRoot = new File("$sdkRoot/platforms/").listFiles().sort().reverse().find { f -> new File(f, "android.jar").exists() }
         if(!platformRoot) throw new GradleException("No android.jar found. Ensure that you have an Android platform installed.")
 
         //collect dependencies needed for desugaring
         def dependencies = (configurations.compileClasspath.asList() + configurations.runtimeClasspath.asList() + [new File(platformRoot, "android.jar")]).collect{ "--classpath $it.path" }.join(" ")
-
+        def d8 = "d8"
+        //try locate
+        try {
+            d8 = new File(new File("$sdkRoot/build-tools/").listFiles().sort().reverse().find { f -> new File(f, "d8").exists() }, "d8")
+            if(!d8.exists())throw new FileNotFoundException("meh")
+            d8 = d8.getAbsolutePath()
+        }catch(ignored){}
         //dex and desugar files - this requires d8 in your PATH
         "$d8 $dependencies --min-api 14 --output ${project.archivesBaseName}Android.jar ${project.archivesBaseName}Desktop.jar"
             .execute(null, new File("$buildDir/libs")).waitForProcessOutput(System.out, System.err)
