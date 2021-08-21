@@ -20,7 +20,7 @@ ext{
     mindustryVersion = 'v130'
     jabelVersion = "0.4.0"
     sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
-    androidJarPath = new File(sdkRoot, "android.jar")
+    androidJarPath = new File("android.jar")
     try {
         platformRoot = new File("$sdkRoot/platforms/").listFiles().sort().reverse().find { f -> new File(f, "android.jar").exists() }
         androidJarPath = new File(platformRoot, "android.jar")
